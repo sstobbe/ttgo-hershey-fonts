@@ -19,10 +19,44 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+@micropython.native
+def displine(disp,x1,y1,x2,y2):
+    #    // general purpose line
+    #// lines are either "shallow" or "steep" based on whether the x delta
+    #// is greater than the y delta
+    dx = x2 - x1;
+    dy = y2 - y1;
+    if dx == 0 & dy == 0:
+        disp.pixel(x1,y1)
+        return
+    
+    shallow = abs(dx) > abs(dy)
+    if shallow:
+        s = abs(dx);       #// number of steps
+        sx = -1 if dx < 0 else 1;   #// x step value
+        sy = (dy << 16) / s;    #// y step value in fixed 16:16
+        x = x1;
+        y = int(y1 << 16);
+        while s:
+            disp.pixel(x, int(y) >> 16);
+            y += sy;
+            x += sx;
+            s -= 1
+      
+    else:
+        #// steep version
+        s = abs(dy);       #// number of steps
+        sy = -1 if dy < 0 else 1;   #// y step value
+        sx = (dx << 16) / s;    #// x step value in fixed 16:16
+        y = y1;
+        x = int(x1 << 16);
+        while s:
+            disp.pixel(int(x) >> 16, y);
+            y += sy;
+            x += sx;
+            s -= 1
 
-import st7789
-
-def text(display, font, message, row=32, column=0, color=st7789.WHITE):
+def text(display, font, message, row=32, column=0):
     '''
     Write `text` on `display` starting on `row` stating in `column` using
     `font` in `color`
@@ -62,7 +96,7 @@ def text(display, font, message, row=32, column=0, color=st7789.WHITE):
                     to_x = pos_x + vector_x - left
                     to_y = pos_y + vector_y
 
-                    display.line(from_x, from_y, to_x, to_y, color)
+                    displine(display, from_x, from_y, to_x, to_y)
 
                     from_x = to_x
                     from_y = to_y
